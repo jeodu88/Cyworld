@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>싸이월드 추억 앨범</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- 사이드바 -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h2>🎵 추억 앨범</h2>
+        </div>
+        
+        <!-- 테마 선택 -->
+        <div class="sidebar-section">
+            <h3>테마 선택</h3>
+            <div class="theme-selector">
+                <button class="theme-btn" data-theme="pastel">🌸 파스텔</button>
+                <button class="theme-btn" data-theme="dot">🔵 도트</button>
+                <button class="theme-btn" data-theme="neon">✨ 네온</button>
+            </div>
+        </div>
+
+        <!-- BGM 설정 -->
+        <div class="sidebar-section">
+            <h3>BGM 설정</h3>
+            <input type="url" id="bgm-url" placeholder="유튜브 URL 입력" class="input-field">
+            <button id="apply-bgm" class="btn btn-secondary">적용</button>
+        </div>
+
+        <!-- 필터/정렬 -->
+        <div class="sidebar-section">
+            <h3>필터/정렬</h3>
+            <select id="sort-by" class="input-field">
+                <option value="date-desc">최신순</option>
+                <option value="date-asc">오래된순</option>
+                <option value="title-asc">제목순</option>
+                <option value="sticker">스티커별</option>
+            </select>
+            <select id="filter-sticker" class="input-field">
+                <option value="">모든 스티커</option>
+                <option value="💖">💖</option>
+                <option value="⭐">⭐</option>
+                <option value="🎵">🎵</option>
+                <option value="📸">📸</option>
+                <option value="🌙">🌙</option>
+            </select>
+        </div>
+
+        <!-- 데이터 관리 -->
+        <div class="sidebar-section">
+            <h3>데이터 관리</h3>
+            <button id="export-data" class="btn btn-primary">내보내기</button>
+            <button id="import-data" class="btn btn-secondary">불러오기</button>
+            <input type="file" id="import-file" accept=".json" style="display: none;">
+            <button id="reset-data" class="btn btn-danger">초기화</button>
+        </div>
+    </aside>
+
+    <!-- 메인 콘텐츠 -->
+    <main class="main-content">
+        <!-- 프로필 카드 -->
+        <div class="profile-card">
+            <div class="profile-image-container">
+                <img id="profile-image" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiBmaWxsPSIjRjBGMEYwIi8+CjxjaXJjbGUgY3g9IjUwIiBjeT0iNDAiIHI9IjE1IiBmaWxsPSIjQ0NDQ0NDIi8+CjxwYXRoIGQ9Ik0yNSA3NUMyNSA2NS4zMzU5IDMyLjMzNTkgNTggNDIgNThINjBDNjkuNjY0MSA1OCA3NSA2NS4zMzU5IDc1IDc1VjEwMEgyNVY3NVoiIGZpbGw9IiNDQ0NDQ0Mi8+Cjwvc3ZnPgo=" alt="프로필 이미지">
+                <input type="file" id="profile-image-input" accept="image/*" style="display: none;">
+                <button id="change-profile-image" class="btn btn-small">변경</button>
+            </div>
+            <div class="profile-info">
+                <input type="text" id="profile-name" placeholder="닉네임을 입력하세요" class="profile-name-input">
+                <textarea id="profile-intro" placeholder="한줄 소개를 입력하세요" class="profile-intro-input"></textarea>
+            </div>
+        </div>
+
+        <!-- BGM 플레이어 -->
+        <div id="bgm-player" class="bgm-player" style="display: none;">
+            <iframe id="bgm-iframe" width="100%" height="60" frameborder="0" allowfullscreen></iframe>
+        </div>
+
+        <!-- 탭 네비게이션 -->
+        <nav class="tab-navigation">
+            <button class="tab-btn active" data-tab="album">📸 앨범</button>
+            <button class="tab-btn" data-tab="upload">📤 업로드</button>
+            <button class="tab-btn" data-tab="guestbook">📝 방명록</button>
+            <button class="tab-btn" data-tab="settings">⚙️ 설정</button>
+        </nav>
+
+        <!-- 탭 콘텐츠 -->
+        <div class="tab-content">
+            <!-- 앨범 탭 -->
+            <div id="album-tab" class="tab-panel active">
+                <div class="album-header">
+                    <h2>내 추억 앨범</h2>
+                    <div class="album-stats">
+                        <span id="photo-count">0</span>장의 사진
+                    </div>
+                </div>
+                <div id="album-grid" class="album-grid">
+                    <!-- 사진 카드들이 여기에 동적으로 추가됩니다 -->
+                </div>
+                <div id="empty-album" class="empty-state" style="display: none;">
+                    <p>📷 아직 업로드된 사진이 없습니다</p>
+                    <p>업로드 탭에서 첫 번째 사진을 추가해보세요!</p>
+                </div>
+            </div>
+
+            <!-- 업로드 탭 -->
+            <div id="upload-tab" class="tab-panel">
+                <div class="upload-section">
+                    <h2>사진 업로드</h2>
+                    <div class="upload-area" id="upload-area">
+                        <div class="upload-icon">📷</div>
+                        <p>여러 장의 사진을 선택하거나 드래그하세요</p>
+                        <input type="file" id="photo-input" multiple accept="image/*" style="display: none;">
+                        <button id="select-photos" class="btn btn-primary">사진 선택</button>
+                    </div>
+                    <div id="upload-preview" class="upload-preview"></div>
+                </div>
+            </div>
+
+            <!-- 방명록 탭 -->
+            <div id="guestbook-tab" class="tab-panel">
+                <div class="guestbook-section">
+                    <h2>방명록</h2>
+                    <div class="guestbook-form">
+                        <input type="text" id="guest-name" placeholder="닉네임" class="input-field">
+                        <textarea id="guest-message" placeholder="메시지를 남겨주세요" class="input-field"></textarea>
+                        <button id="add-guest-message" class="btn btn-primary">등록</button>
+                    </div>
+                    <div id="guestbook-list" class="guestbook-list">
+                        <!-- 방명록 항목들이 여기에 동적으로 추가됩니다 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 설정 탭 -->
+            <div id="settings-tab" class="tab-panel">
+                <div class="settings-section">
+                    <h2>설정 및 데이터 관리</h2>
+                    <div class="settings-grid">
+                        <div class="setting-card">
+                            <h3>데이터 내보내기</h3>
+                            <p>현재 앨범 데이터를 JSON 파일로 다운로드합니다.</p>
+                            <button id="export-settings" class="btn btn-primary">내보내기</button>
+                        </div>
+                        <div class="setting-card">
+                            <h3>데이터 불러오기</h3>
+                            <p>이전에 내보낸 JSON 파일을 불러와서 복원합니다.</p>
+                            <button id="import-settings" class="btn btn-secondary">불러오기</button>
+                        </div>
+                        <div class="setting-card">
+                            <h3>데이터 초기화</h3>
+                            <p>모든 데이터를 삭제하고 처음부터 시작합니다.</p>
+                            <button id="reset-settings" class="btn btn-danger">초기화</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 모달 -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+
+    <!-- 알림 -->
+    <div id="notification" class="notification"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
