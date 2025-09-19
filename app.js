@@ -840,6 +840,124 @@ const AppState = {
         setTimeout(() => {
             notification.classList.remove('show');
         }, 3000);
+    },
+
+    // AppState 객체에 추가할 속성들
+    lottery_spinning: false,
+    lottery_winners: [],
+
+    // 돌림판 초기화 메서드 추가
+    init_lottery_wheel() {
+        this.update_lottery_wheel();
+    },
+
+    // 돌림판 업데이트 메서드 추가
+    update_lottery_wheel() {
+        const wheel_items = document.getElementById('wheel-items');
+        if (!wheel_items) return;
+        
+        if (this.friends.length === 0) {
+            wheel_items.innerHTML = '<div style="text-align: center; color: var(--text-color); padding: 20px;">일촌을 먼저 추가해주세요!</div>';
+            return;
+        }
+        
+        // 일촌들을 원형으로 배치
+        const angle_step = 360 / this.friends.length;
+        wheel_items.innerHTML = this.friends.map((friend, index) => {
+            const angle = index * angle_step;
+            const x = 50 + 40 * Math.cos((angle - 90) * Math.PI / 180);
+            const y = 50 + 40 * Math.sin((angle - 90) * Math.PI / 180);
+            
+            return `
+                <div class="wheel-item" 
+                     style="left: ${x}%; top: ${y}%; transform: translate(-50%, -50%);"
+                     data-friend-id="${friend.id}">
+                    ${friend.name.charAt(0)}
+                </div>
+            `;
+        }).join('');
+    },
+
+    // 돌림판 시작 메서드 추가
+    start_lottery() {
+        if (this.lottery_spinning) return;
+        if (this.friends.length === 0) {
+            this.show_notification('일촌을 먼저 추가해주세요!', 'error');
+            return;
+        }
+        
+        this.lottery_spinning = true;
+        const wheel = document.getElementById('lottery-wheel');
+        const result = document.getElementById('lottery-result');
+        const start_btn = document.getElementById('start-lottery');
+        const reset_btn = document.getElementById('reset-lottery');
+        
+        // 결과 숨기기
+        result.style.display = 'none';
+        start_btn.style.display = 'none';
+        reset_btn.style.display = 'inline-block';
+        
+        // 랜덤 회전 각도 계산 (최소 5바퀴 + 랜덤)
+        const base_rotation = 1800; // 5바퀴
+        const random_rotation = Math.random() * 360;
+        const total_rotation = base_rotation + random_rotation;
+        
+        // CSS 변수로 회전 각도 설정
+        wheel.style.setProperty('--spin-rotation', `${total_rotation}deg`);
+        wheel.classList.add('spinning');
+        
+        // 3초 후 결과 표시
+        setTimeout(() => {
+            this.show_lottery_result(total_rotation);
+        }, 3000);
+    },
+
+    // 돌림판 결과 표시 메서드 추가
+    show_lottery_result(rotation) {
+        const wheel = document.getElementById('lottery-wheel');
+        const result = document.getElementById('lottery-result');
+        const winner_name = document.getElementById('winner-name');
+        const winner_relation = document.getElementById('winner-relation');
+        
+        // 회전 중지
+        wheel.classList.remove('spinning');
+        this.lottery_spinning = false;
+        
+        // 당첨자 계산
+        const normalized_angle = (360 - (rotation % 360)) % 360;
+        const angle_per_friend = 360 / this.friends.length;
+        const winner_index = Math.floor(normalized_angle / angle_per_friend);
+        const winner = this.friends[winner_index];
+        
+        if (winner) {
+            // 당첨자 기록에 추가
+            this.lottery_winners.push({
+                name: winner.name,
+                relation: winner.relation,
+                won_at: new Date().toISOString()
+            });
+            
+            // 결과 표시
+            winner_name.textContent = winner.name;
+            winner_relation.textContent = winner.relation;
+            result.style.display = 'block';
+            
+            this.show_notification(`�� ${winner.name}님이 당첨되었습니다!`);
+            this.save_to_storage();
+        }
+    },
+
+    // 돌림판 리셋 메서드 추가
+    reset_lottery() {
+        const result = document.getElementById('lottery-result');
+        const start_btn = document.getElementById('start-lottery');
+        const reset_btn = document.getElementById('reset-lottery');
+        
+        result.style.display = 'none';
+        start_btn.style.display = 'inline-block';
+        reset_btn.style.display = 'none';
+        
+        this.update_lottery_wheel();
     }
 };
 

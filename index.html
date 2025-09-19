@@ -177,6 +177,31 @@
                             <input type="text" id="friend-relation" placeholder="관계 (예: 친구, 가족, 동료)" class="input-field">
                             <button id="add-friend" class="btn btn-primary">일촌 추가</button>
                         </div>
+                        
+                        <!-- 돌림판 섹션 -->
+                        <div class="lottery-section">
+                            <h3>🎯 일촌 추첨</h3>
+                            <div class="lottery-controls">
+                                <button id="start-lottery" class="btn btn-primary lottery-btn">🎲 추첨 시작!</button>
+                                <button id="reset-lottery" class="btn btn-secondary" style="display: none;">다시 추첨</button>
+                            </div>
+                            <div class="lottery-wheel-container">
+                                <div id="lottery-wheel" class="lottery-wheel">
+                                    <div class="wheel-center">
+                                        <div class="wheel-pointer"></div>
+                                    </div>
+                                    <div id="wheel-items" class="wheel-items">
+                                        <!-- 일촌들이 여기에 동적으로 추가됩니다 -->
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="lottery-result" class="lottery-result" style="display: none;">
+                                <h4>🎉 당첨자</h4>
+                                <div id="winner-name" class="winner-name"></div>
+                                <div id="winner-relation" class="winner-relation"></div>
+                            </div>
+                        </div>
+                        
                         <div class="friends-list">
                             <h3>내 일촌 목록</h3>
                             <div id="friends-grid" class="friends-grid">
