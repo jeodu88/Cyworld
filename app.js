@@ -8,6 +8,8 @@ const AppState = {
     // 앱 데이터
     photos: [],
     guestbook: [],
+    friends: [],
+    waves: [],
     profile: {
         name: '',
         intro: '',
@@ -15,17 +17,23 @@ const AppState = {
     },
     theme: 'pastel',
     bgm_url: '',
+    visitors: {
+        today: 0,
+        total: 0
+    },
     
     // UI 상태
     current_tab: 'album',
     sort_by: 'date-desc',
     filter_sticker: '',
+    sidebar_hidden: false,
     
     // 초기화
     init() {
         this.load_from_storage();
         this.setup_event_listeners();
         this.render_all();
+        this.update_visitor_count();
     },
     
     // localStorage에서 데이터 로드
@@ -36,9 +44,12 @@ const AppState = {
                 const data = JSON.parse(saved_data);
                 this.photos = data.photos || [];
                 this.guestbook = data.guestbook || [];
+                this.friends = data.friends || [];
+                this.waves = data.waves || [];
                 this.profile = data.profile || { name: '', intro: '', image: null };
                 this.theme = data.theme || 'pastel';
                 this.bgm_url = data.bgm_url || '';
+                this.visitors = data.visitors || { today: 0, total: 0 };
             }
         } catch (error) {
             console.error('데이터 로드 실패:', error);
@@ -52,9 +63,12 @@ const AppState = {
             const data = {
                 photos: this.photos,
                 guestbook: this.guestbook,
+                friends: this.friends,
+                waves: this.waves,
                 profile: this.profile,
                 theme: this.theme,
-                bgm_url: this.bgm_url
+                bgm_url: this.bgm_url,
+                visitors: this.visitors
             };
             localStorage.setItem('cyworld_album_data', JSON.stringify(data));
         } catch (error) {
@@ -65,6 +79,11 @@ const AppState = {
     
     // 이벤트 리스너 설정
     setup_event_listeners() {
+        // 사이드바 토글
+        document.getElementById('sidebar-toggle').addEventListener('click', () => {
+            this.toggle_sidebar();
+        });
+        
         // 탭 전환
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -146,6 +165,16 @@ const AppState = {
             this.add_guest_message();
         });
         
+        // 파도타기
+        document.getElementById('wave-button').addEventListener('click', () => {
+            this.add_wave();
+        });
+        
+        // 일촌 추가
+        document.getElementById('add-friend').addEventListener('click', () => {
+            this.add_friend();
+        });
+        
         // 데이터 관리
         document.getElementById('export-data').addEventListener('click', () => {
             this.export_data();
@@ -175,6 +204,21 @@ const AppState = {
         });
     },
     
+    // 사이드바 토글
+    toggle_sidebar() {
+        this.sidebar_hidden = !this.sidebar_hidden;
+        const sidebar = document.querySelector('.sidebar');
+        const main_content = document.querySelector('.main-content');
+        
+        if (this.sidebar_hidden) {
+            sidebar.classList.add('hidden');
+            main_content.classList.add('sidebar-hidden');
+        } else {
+            sidebar.classList.remove('hidden');
+            main_content.classList.remove('sidebar-hidden');
+        }
+    },
+    
     // 탭 전환
     switch_tab(tab_name) {
         // 모든 탭 버튼과 패널 비활성화
@@ -192,6 +236,10 @@ const AppState = {
             this.render_album();
         } else if (tab_name === 'upload') {
             this.render_upload_preview();
+        } else if (tab_name === 'wave') {
+            this.render_wave();
+        } else if (tab_name === 'friends') {
+            this.render_friends();
         } else if (tab_name === 'guestbook') {
             this.render_guestbook();
         }
@@ -331,6 +379,59 @@ const AppState = {
         this.show_notification('방명록이 삭제되었습니다.');
     },
     
+    // 파도타기 추가
+    add_wave() {
+        const wave = {
+            id: Date.now(),
+            created_at: new Date().toISOString()
+        };
+        
+        this.waves.push(wave);
+        this.visitors.today++;
+        this.visitors.total++;
+        
+        this.save_to_storage();
+        this.render_wave();
+        this.update_visitor_count();
+        this.show_notification('파도타기 완료! 방문자 수가 증가했습니다.');
+    },
+    
+    // 일촌 추가
+    add_friend() {
+        const name = document.getElementById('friend-name').value.trim();
+        const relation = document.getElementById('friend-relation').value.trim();
+        
+        if (!name || !relation) {
+            this.show_notification('이름과 관계를 모두 입력해주세요.', 'error');
+            return;
+        }
+        
+        const friend = {
+            id: Date.now(),
+            name: name,
+            relation: relation,
+            created_at: new Date().toISOString()
+        };
+        
+        this.friends.push(friend);
+        this.save_to_storage();
+        this.render_friends();
+        
+        // 입력 필드 초기화
+        document.getElementById('friend-name').value = '';
+        document.getElementById('friend-relation').value = '';
+        
+        this.show_notification('일촌이 추가되었습니다.');
+    },
+    
+    // 일촌 삭제
+    delete_friend(id) {
+        this.friends = this.friends.filter(friend => friend.id !== id);
+        this.save_to_storage();
+        this.render_friends();
+        this.show_notification('일촌이 삭제되었습니다.');
+    },
+    
     // 사진에 스티커 추가/제거
     toggle_sticker(photo_id, sticker) {
         const photo = this.photos.find(p => p.id === photo_id);
@@ -344,6 +445,45 @@ const AppState = {
             this.save_to_storage();
             this.render_album();
         }
+    },
+    
+    // 사진 제목 수정
+    edit_photo_title(photo_id) {
+        const photo = this.photos.find(p => p.id === photo_id);
+        if (!photo) return;
+        
+        const new_title = prompt('새로운 제목을 입력하세요:', photo.title);
+        if (new_title && new_title.trim() !== '') {
+            photo.title = new_title.trim();
+            this.save_to_storage();
+            this.render_album();
+            this.show_notification('사진 제목이 수정되었습니다.');
+        }
+    },
+    
+    // 사진 날짜 수정
+    edit_photo_date(photo_id) {
+        const photo = this.photos.find(p => p.id === photo_id);
+        if (!photo) return;
+        
+        const new_date = prompt('새로운 날짜를 입력하세요 (YYYY-MM-DD):', photo.date);
+        if (new_date && this.is_valid_date(new_date)) {
+            photo.date = new_date;
+            this.save_to_storage();
+            this.render_album();
+            this.show_notification('사진 날짜가 수정되었습니다.');
+        } else if (new_date) {
+            this.show_notification('올바른 날짜 형식이 아닙니다. (YYYY-MM-DD)', 'error');
+        }
+    },
+    
+    // 날짜 유효성 검사
+    is_valid_date(date_string) {
+        const regex = /^\d{4}-\d{2}-\d{2}$/;
+        if (!regex.test(date_string)) return false;
+        
+        const date = new Date(date_string);
+        return date instanceof Date && !isNaN(date);
     },
     
     // 사진 삭제
@@ -362,9 +502,12 @@ const AppState = {
             const data = {
                 photos: this.photos,
                 guestbook: this.guestbook,
+                friends: this.friends,
+                waves: this.waves,
                 profile: this.profile,
                 theme: this.theme,
                 bgm_url: this.bgm_url,
+                visitors: this.visitors,
                 export_date: new Date().toISOString(),
                 version: '1.0'
             };
@@ -405,9 +548,12 @@ const AppState = {
                 if (confirm('기존 데이터가 모두 삭제됩니다. 계속하시겠습니까?')) {
                     this.photos = data.photos || [];
                     this.guestbook = data.guestbook || [];
+                    this.friends = data.friends || [];
+                    this.waves = data.waves || [];
                     this.profile = data.profile || { name: '', intro: '', image: null };
                     this.theme = data.theme || 'pastel';
                     this.bgm_url = data.bgm_url || '';
+                    this.visitors = data.visitors || { today: 0, total: 0 };
                     
                     this.save_to_storage();
                     this.render_all();
@@ -428,7 +574,9 @@ const AppState = {
     validate_import_data(data) {
         return data && 
                Array.isArray(data.photos) && 
-               Array.isArray(data.guestbook) && 
+               Array.isArray(data.guestbook) &&
+               Array.isArray(data.friends) &&
+               Array.isArray(data.waves) &&
                typeof data.profile === 'object';
     },
     
@@ -437,14 +585,24 @@ const AppState = {
         if (confirm('모든 데이터가 삭제됩니다. 정말로 초기화하시겠습니까?')) {
             this.photos = [];
             this.guestbook = [];
+            this.friends = [];
+            this.waves = [];
             this.profile = { name: '', intro: '', image: null };
             this.theme = 'pastel';
             this.bgm_url = '';
+            this.visitors = { today: 0, total: 0 };
             
             localStorage.removeItem('cyworld_album_data');
             this.render_all();
             this.show_notification('데이터가 초기화되었습니다.');
         }
+    },
+    
+    // 방문자 수 업데이트
+    update_visitor_count() {
+        document.getElementById('today-visitors').textContent = this.visitors.today;
+        document.getElementById('total-visitors').textContent = this.visitors.total;
+        document.getElementById('wave-count').textContent = this.waves.length;
     },
     
     // 앨범 렌더링
@@ -495,10 +653,16 @@ const AppState = {
         container.innerHTML = filtered_photos.map(photo => `
             <div class="photo-card" data-photo-id="${photo.id}">
                 <img src="${photo.image}" alt="${photo.title}" onclick="AppState.show_photo_modal('${photo.id}')">
-                <div class="photo-title">${photo.title}</div>
+                <div class="photo-title">
+                    <span class="title-text">${photo.title}</span>
+                    <button class="edit-btn" onclick="AppState.edit_photo_title('${photo.id}')" title="제목 수정">✏️</button>
+                </div>
                 <div class="photo-description">${photo.description}</div>
                 <div class="photo-meta">
-                    <div class="photo-date">${this.format_date(photo.date)}</div>
+                    <div class="photo-date">
+                        <span>${this.format_date(photo.date)}</span>
+                        <button class="edit-btn" onclick="AppState.edit_photo_date('${photo.id}')" title="날짜 수정">✏️</button>
+                    </div>
                     <div class="photo-stickers">
                         ${['💖', '⭐', '🎵', '📸', '🌙'].map(sticker => 
                             `<span class="sticker ${photo.stickers.includes(sticker) ? 'active' : ''}" 
@@ -526,6 +690,43 @@ const AppState = {
                 <img src="${photo.image}" alt="${photo.title}">
                 <div class="photo-title">${photo.title}</div>
                 <div class="photo-date">${this.format_date(photo.date)}</div>
+            </div>
+        `).join('');
+    },
+    
+    // 파도타기 렌더링
+    render_wave() {
+        const container = document.getElementById('wave-list');
+        const recent_waves = this.waves.slice(-10); // 최근 10개만 표시
+        
+        if (recent_waves.length === 0) {
+            container.innerHTML = '<p>아직 파도타기가 없습니다.</p>';
+            return;
+        }
+        
+        container.innerHTML = recent_waves.map(wave => `
+            <div class="wave-item">
+                <span>🌊 파도타기</span>
+                <span class="wave-time">${this.format_time(wave.created_at)}</span>
+            </div>
+        `).join('');
+    },
+    
+    // 일촌 렌더링
+    render_friends() {
+        const container = document.getElementById('friends-grid');
+        
+        if (this.friends.length === 0) {
+            container.innerHTML = '<p>아직 일촌이 없습니다. 일촌을 추가해보세요!</p>';
+            return;
+        }
+        
+        container.innerHTML = this.friends.map(friend => `
+            <div class="friend-card">
+                <div class="friend-avatar">${friend.name.charAt(0)}</div>
+                <div class="friend-name">${friend.name}</div>
+                <div class="friend-relation">${friend.relation}</div>
+                <button class="friend-delete" onclick="AppState.delete_friend(${friend.id})" title="삭제">×</button>
             </div>
         `).join('');
     },
@@ -575,6 +776,8 @@ const AppState = {
         // 각 탭 렌더링
         this.render_album();
         this.render_upload_preview();
+        this.render_wave();
+        this.render_friends();
         this.render_guestbook();
     },
     
@@ -613,6 +816,17 @@ const AppState = {
             year: 'numeric',
             month: 'long',
             day: 'numeric'
+        });
+    },
+    
+    // 시간 포맷팅
+    format_time(date_string) {
+        const date = new Date(date_string);
+        return date.toLocaleString('ko-KR', {
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
         });
     },
     

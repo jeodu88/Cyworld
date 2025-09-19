@@ -7,6 +7,9 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <!-- 사이드바 토글 버튼 -->
+    <button id="sidebar-toggle" class="sidebar-toggle">☰</button>
+
     <!-- 사이드바 -->
     <aside class="sidebar">
         <div class="sidebar-header">
@@ -46,6 +49,14 @@
                 <option value="🎵">🎵</option>
                 <option value="📸">📸</option>
                 <option value="🌙">🌙</option>
+                <option value="🌟">🌟</option>
+                <option value="🌈">🌈</option>
+                <option value="🌊">🌊</option>
+                <option value="🌺">🌺</option>
+                <option value="🌻">🌻</option>
+                <option value="🌼">🌼</option>
+                <option value="🌷">🌷</option>
+                <option value="🦐">🦐</option>
             </select>
         </div>
 
@@ -83,6 +94,8 @@
         <nav class="tab-navigation">
             <button class="tab-btn active" data-tab="album">📸 앨범</button>
             <button class="tab-btn" data-tab="upload">📤 업로드</button>
+            <button class="tab-btn" data-tab="wave">🌊 파도타기</button>
+            <button class="tab-btn" data-tab="friends">👥 일촌</button>
             <button class="tab-btn" data-tab="guestbook">📝 방명록</button>
             <button class="tab-btn" data-tab="settings">⚙️ 설정</button>
         </nav>
@@ -117,6 +130,60 @@
                         <button id="select-photos" class="btn btn-primary">사진 선택</button>
                     </div>
                     <div id="upload-preview" class="upload-preview"></div>
+                </div>
+            </div>
+
+            <!-- 파도타기 탭 -->
+            <div id="wave-tab" class="tab-panel">
+                <div class="wave-section">
+                    <h2>🌊 파도타기</h2>
+                    <div class="wave-content">
+                        <div class="wave-stats">
+                            <div class="stat-card">
+                                <h3>오늘의 방문자</h3>
+                                <div class="stat-number" id="today-visitors">0</div>
+                            </div>
+                            <div class="stat-card">
+                                <h3>총 방문자</h3>
+                                <div class="stat-number" id="total-visitors">0</div>
+                            </div>
+                            <div class="stat-card">
+                                <h3>파도타기 횟수</h3>
+                                <div class="stat-number" id="wave-count">0</div>
+                            </div>
+                        </div>
+                        <div class="wave-actions">
+                            <button id="wave-button" class="btn btn-primary wave-btn">🌊 파도타기!</button>
+                            <p class="wave-description">파도타기를 눌러서 방문자 수를 늘려보세요!</p>
+                        </div>
+                        <div class="recent-waves">
+                            <h3>최근 파도타기</h3>
+                            <div id="wave-list" class="wave-list">
+                                <!-- 파도타기 기록이 여기에 표시됩니다 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 일촌 탭 -->
+            <div id="friends-tab" class="tab-panel">
+                <div class="friends-section">
+                    <h2>👥 일촌</h2>
+                    <div class="friends-content">
+                        <div class="friends-form">
+                            <h3>일촌 추가</h3>
+                            <input type="text" id="friend-name" placeholder="일촌 이름" class="input-field">
+                            <input type="text" id="friend-relation" placeholder="관계 (예: 친구, 가족, 동료)" class="input-field">
+                            <button id="add-friend" class="btn btn-primary">일촌 추가</button>
+                        </div>
+                        <div class="friends-list">
+                            <h3>내 일촌 목록</h3>
+                            <div id="friends-grid" class="friends-grid">
+                                <!-- 일촌 목록이 여기에 표시됩니다 -->
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
